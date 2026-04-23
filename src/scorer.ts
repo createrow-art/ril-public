@@ -15,22 +15,22 @@ export type InterestProfile = {
 };
 
 async function llm(prompt: string, maxTokens = 300): Promise<string> {
-  const res = await fetch(`${config.moonshotBaseUrl}/chat/completions`, {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.moonshotApiKey}`,
+      'x-api-key': config.anthropicApiKey,
+      'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'moonshot-v1-32k',
+      model: 'claude-haiku-4-5-20251001',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: maxTokens,
-      temperature: 0.2,
     }),
   });
   if (!res.ok) throw new Error(`LLM API ${res.status}`);
-  const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  return (data?.choices?.[0]?.message?.content ?? '').trim();
+  const data = (await res.json()) as { content?: Array<{ text?: string }> };
+  return (data?.content?.[0]?.text ?? '').trim();
 }
 
 export async function getProfile(): Promise<InterestProfile | null> {
@@ -94,14 +94,14 @@ Rules: 3-7 specific topics ordered by frequency. Topics should be concrete (e.g.
     console.warn('(profiler error:', (err as Error).message, ')');
     return {
       topics: [],
-      summary: 'Could not build profile — check your Moonshot API key.',
+      summary: 'Could not build profile — check your ANTHROPIC_API_KEY.',
       generatedAt: new Date().toISOString(),
     };
   }
 }
 
 export async function scoreItem(item: VaultItem, profile: InterestProfile): Promise<number> {
-  if (!config.moonshotApiKey || profile.topics.length === 0) return 0;
+  if (!config.anthropicApiKey || profile.topics.length === 0) return 0;
 
   const desc = [item.title, item.tags.join(', ')]
     .filter(Boolean)

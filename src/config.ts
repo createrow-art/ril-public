@@ -11,10 +11,6 @@ function required(name: string): string {
 }
 
 export const config = {
-  discordToken: required('DISCORD_TOKEN'),
-  discordGuildId: required('DISCORD_GUILD_ID'),
-  discordChannelId: required('DISCORD_CHANNEL_ID'),
   vaultPath: required('VAULT_PATH'),
-  moonshotApiKey: process.env.MOONSHOT_API_KEY ?? '',
-  moonshotBaseUrl: process.env.MOONSHOT_BASE_URL ?? 'https://api.moonshot.ai/v1',
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? '',
 };

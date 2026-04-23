@@ -78,8 +78,8 @@ const TAXONOMY = [
 ];
 
 /**
- * LLM-based tagger using Moonshot/Kimi.
- * Falls back silently if the API call fails.
+ * LLM-based tagger using Claude Haiku.
+ * Falls back silently if the API call fails or key is not set.
  */
 export async function llmTag(args: {
   title: string;
@@ -88,7 +88,7 @@ export async function llmTag(args: {
   content: string;
   existingTags: string[];
 }): Promise<string[]> {
-  if (!config.moonshotApiKey) return [];
+  if (!config.anthropicApiKey) return [];
 
   const { title, url, note, content, existingTags } = args;
 
@@ -109,17 +109,17 @@ export async function llmTag(args: {
   ].join('\n');
 
   try {
-    const res = await fetch(`${config.moonshotBaseUrl}/chat/completions`, {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.moonshotApiKey}`,
+        'x-api-key': config.anthropicApiKey,
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'moonshot-v1-8k',
+        model: 'claude-haiku-4-5-20251001',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 30,
-        temperature: 0,
       }),
     });
 
@@ -128,11 +128,9 @@ export async function llmTag(args: {
       return [];
     }
 
-    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const msg = data?.choices?.[0]?.message;
-    const raw = (msg?.content || msg?.reasoning_content || '') as string;
+    const data = (await res.json()) as { content?: Array<{ text?: string }> };
+    const raw = data?.content?.[0]?.text ?? '';
 
-    // Parse response: split on commas/newlines, strip #, validate against taxonomy
     const parsed = raw
       .split(/[,\n]+/)
       .map((t) => t.trim().replace(/^#/, '').toLowerCase())

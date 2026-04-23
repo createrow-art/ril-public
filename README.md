@@ -1,111 +1,114 @@
-# RIL — Discord → Obsidian Read-It-Later
+# RIL — Read It Later
 
-A personal read-it-later system. Paste a URL into a private Discord channel from your phone or laptop; a local Node service extracts the article, writes a clean Markdown file with frontmatter into an Obsidian vault, and reacts on Discord to confirm. You read in Obsidian on any device.
+A personal read-it-later system that lives on your machine. Save links from anywhere via a Chrome extension (new tab page + popup + right-click menu). Articles are saved as Markdown files in a local folder and powered by Claude AI for auto-tagging and Smart Mode relevance scoring.
 
-Day 1 scope is the ingest pipeline in this repo. The triage dashboard (Day 2) will read and update items in the vault via a small local HTTP API.
+No cloud, no subscription, no account. Just a Chrome extension + a local server.
 
-## Prerequisites
+## What you get
 
-- **Node 20+** (for native `fetch`). Check with `node --version`.
-- **An Obsidian vault** you already sync to your phone (via Obsidian Sync, iCloud, or Syncthing).
-- **A Discord bot** in a private server (see setup below).
+- **New tab page** — your reading list, grouped by domain, tag, time, or AI relevance
+- **Extension popup** — click the toolbar icon to save the current tab in one click
+- **Right-click menu** — save any link without leaving the page
+- **Auto-tagging** — Claude reads the article and picks relevant tags automatically
+- **Smart Mode** — Claude builds an interest profile from your saves and ranks new articles by how relevant they are to you
+
+## Requirements
+
+- macOS or Windows with Node.js 20+ installed
+- Chrome browser
+- An Anthropic API key (for tagging + Smart Mode — optional but recommended)
 
 ## Setup
 
-### 1. Install dependencies
+### 1. Clone and install
 
 ```bash
+git clone <this-repo-url> RIL
+cd RIL
 npm install
 ```
 
-### 2. Create your `.env`
+### 2. Configure
 
 ```bash
 cp .env.example .env
 ```
 
-Then open `.env` in your editor (Cursor, VS Code, or `nano .env`) and fill in `DISCORD_TOKEN` with the token you get from the Discord Developer Portal. The other three values are prefilled.
+Open `.env` and fill in:
 
-### 3. Create the Discord bot (one-time)
+- `VAULT_PATH` — a folder where your articles will be saved (e.g. `/Users/yourname/Documents/RIL`). It will be created automatically on first run.
+- `ANTHROPIC_API_KEY` — your Anthropic API key from [console.anthropic.com](https://console.anthropic.com). Optional — the app works without it but tagging and Smart Mode will be off.
 
-1. Go to <https://discord.com/developers/applications> → New Application → name it "RIL".
-2. **Bot** tab → Reset Token → copy the new token into `.env` (it's only shown once).
-3. Still on the Bot tab, enable **"Message Content Intent"** and **"Server Members Intent"**. Save.
-4. **OAuth2 → URL Generator** → scopes: `bot`. Permissions: `View Channels`, `Read Message History`, `Add Reactions`.
-5. Copy the generated URL, open it in your browser, and invite the bot to your private server.
-6. In Discord (with Developer Mode enabled in Settings → Advanced), right-click the server → Copy Server ID, and right-click the `#ril` channel → Copy Channel ID. Paste these into `.env` if they're not already filled.
-
-### 4. Run
+### 3. Start the server
 
 ```bash
-npm run dev
+npm start
 ```
 
 You should see:
-
 ```
-✓ Logged in as <YourBotName>
-  Watching channel: 1495339706974470186
-  Vault path:       /Users/shanzhong/Documents/Obsidian/RIL
-  Ready. Paste a URL into #ril.
+✓ API server at http://localhost:3000
 ```
 
-Paste any URL into the `#ril` channel. Within a few seconds:
-
-- A file appears in `VAULT_PATH/Inbox/` with frontmatter + clean Markdown.
-- The bot reacts on Discord:
-  - 👍 saved with full extraction
-  - ⚠️  saved as URL-only stub (paywall / JS-heavy / X post etc.)
-  - 🔁 duplicate — already in your vault
-  - ❌ unexpected error — check terminal logs
-
-## Vault layout
-
-```
-VAULT_PATH/
-├── Inbox/     # new arrivals from Discord
-├── Saved/     # items triaged as "will read"  (Day 2 will populate)
-└── Archive/   # processed, kept for reference (Day 2 will populate)
-```
-
-The three folders are created automatically on first run.
-
-## Auto-tagger
-
-Every ingested item gets `tags: [...]` populated from two rule layers (see `RIL-spec.md` §5.1):
-
-- `config/domain-tags.json` — coarse tags based on the source domain (e.g. `arxiv.org` → `#research`).
-- `config/keyword-tags.json` — topical tags from regex patterns over title + URL + first 200 words (e.g. `\bagent\b` → `#agents`).
-
-Both files are editable JSON — tune them freely as your corpus emerges.
-
-## Development
-
-```bash
-npm run dev     # tsx watch — auto-restarts on file changes
-npm start       # one-shot run without watch
-```
-
-For production-style run (auto-restart on crash, survives reboot), wrap with `pm2`:
+To keep it running in the background across reboots:
 
 ```bash
 npm install -g pm2
-pm2 start --name ril --interpreter tsx src/index.ts
-pm2 save
-pm2 startup   # follow printed instructions
+pm2 start npm --name ril -- start
+pm2 save && pm2 startup   # follow the printed instructions
 ```
 
-## Troubleshooting
+### 4. Install the Chrome extension
 
-**"Missing required env var: DISCORD_TOKEN"** — you haven't filled `.env` yet.
+1. Open Chrome → go to `chrome://extensions`
+2. Enable **Developer mode** (toggle in the top right)
+3. Click **Load unpacked** → select the `extension/` folder inside this repo
+4. Open a new tab — you should see your RIL dashboard
 
-**Bot logs in but doesn't react to messages** — you forgot to enable "Message Content Intent" in the Bot tab of the Developer Portal. Enable it and restart.
+## Using RIL
 
-**Bot sees the message but can't react** — invite permissions didn't include "Add Reactions". Re-invite with the correct OAuth URL or adjust channel/role permissions.
+**Save a link:**
+- Paste a URL into the bar at the top of the new tab page and press Enter
+- Click the RIL icon in the Chrome toolbar to save the current tab
+- Right-click any link → "Save page to RIL"
 
-**Articles extract as garbled HTML** — Readability failed for that site. Expected behavior for paywalls, heavy-JS pages, YouTube, X, etc. The stub still captures URL + title, which is enough for triage.
+**Triage your inbox:**
+- `j` / `k` — move up/down
+- `e` — archive (done reading)
+- `s` — save for later
+- `o` — open the original URL
+- `a` — focus the URL input to save a new link
+- `t` — cycle between group-by views (domain / tag / time / Smart)
+- `?` — show keyboard shortcuts
 
-**File not appearing in Obsidian** — `VAULT_PATH` points somewhere your vault isn't actually syncing. Confirm by `ls $VAULT_PATH/.obsidian` — if `.obsidian` exists, it's the right vault root.
+**Smart Mode:**
+- Click ⚙ → toggle "Smart Mode" on
+- Claude analyzes your recent saves and builds an interest profile
+- New articles are scored 0–10 for relevance to your interests
+- Click "Smart ✦" in the header to sort by relevance tier
+
+## Folder layout
+
+Articles are saved as Markdown files with frontmatter:
+
+```
+VAULT_PATH/
+├── Inbox/     # new saves land here
+├── Saved/     # items you want to read later
+└── Archive/   # done, kept for reference
+```
+
+You can open these files in any text editor, Obsidian, or any Markdown app.
+
+## Updating
+
+```bash
+git pull
+npm install
+pm2 restart ril
+```
+
+Then reload the extension in Chrome (`chrome://extensions` → refresh icon).
 
 ## License
 
