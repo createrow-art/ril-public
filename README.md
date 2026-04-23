@@ -115,3 +115,7 @@ Then reload the extension in Chrome (`chrome://extensions` → refresh icon).
 ## License
 
 MIT
+
+---
+
+Built by [Shan](https://x.com/paladinworld)
