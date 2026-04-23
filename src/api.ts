@@ -176,9 +176,7 @@ app.post('/api/profile/refresh', async (c) => {
   return c.json(profile);
 });
 
-// Serve extension UI as a web app (for Tailscale mobile access)
-// root is relative to cwd — pm2 runs from ~/Documents/RIL
-// Use app.get() so POST routes like /api/items are not intercepted
+// Serve the extension UI as a local web app
 app.get('/*', serveStatic({ root: 'extension', index: 'newtab.html' }));
 
 export function startApi(port = 3000): void {
