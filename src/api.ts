@@ -112,7 +112,7 @@ app.post('/api/items', async (c) => {
   (async () => {
     try {
       const settings = await getSettings();
-      if (!settings.smartMode || !config.moonshotApiKey) return;
+      if (!settings.smartMode || !config.anthropicApiKey) return;
       const profile = await getProfile();
       if (!profile || profile.topics.length === 0) return;
       // Build a minimal VaultItem for scoring
@@ -184,6 +184,5 @@ app.get('/*', serveStatic({ root: 'extension', index: 'newtab.html' }));
 export function startApi(port = 3000): void {
   serve({ fetch: app.fetch, port }, (info) => {
     console.log(`✓ API server at http://localhost:${info.port}`);
-    console.log(`  Mobile (Tailscale): http://100.74.245.23:${info.port}`);
   });
 }

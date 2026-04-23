@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Discord → Obsidian read-it-later, with a local triage dashboard",
+  "description": "Chrome extension + local server for saving articles. AI tagging, Smart Mode scoring, plain Markdown files.",
   "license": "MIT",
   "engines": {
     "node": ">=20"
@@ -15,7 +15,6 @@
   "dependencies": {
     "@hono/node-server": "^2.0.0",
     "@mozilla/readability": "^0.5.0",
-    "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "gray-matter": "^4.0.3",
     "hono": "^4.12.14",
