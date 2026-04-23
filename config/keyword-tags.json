@@ -1,0 +1,11 @@
+[
+  { "pattern": "\\b(agent|agentic|autonomous|claude[- ]code)\\b", "tag": "#agents" },
+  { "pattern": "\\b(rag|retrieval[- ]augmented)\\b", "tag": "#rag" },
+  { "pattern": "\\b(eval|evals|benchmark|harness)\\b", "tag": "#evals" },
+  { "pattern": "\\b(fine[- ]?tune|post[- ]training|rlhf|dpo)\\b", "tag": "#training" },
+  { "pattern": "\\b(mcp|tool[- ]use|function[- ]calling)\\b", "tag": "#tools" },
+  { "pattern": "\\b(alignment|safety|interpretability|constitutional)\\b", "tag": "#alignment" },
+  { "pattern": "\\b(reasoning|chain[- ]of[- ]thought|cot)\\b", "tag": "#reasoning" },
+  { "pattern": "\\b(design|ux|ui|figma)\\b", "tag": "#design" },
+  { "pattern": "\\b(founder|startup|seed|series [a-d])\\b", "tag": "#startup" }
+]

@@ -1,0 +1,17 @@
+{
+  "youtube.com": ["#video"],
+  "youtu.be": ["#video"],
+  "arxiv.org": ["#research"],
+  "github.com": ["#code", "#tools"],
+  "substack.com": ["#essay"],
+  "every.to": ["#essay"],
+  "stratechery.com": ["#essay"],
+  "platformer.news": ["#essay"],
+  "anthropic.com": ["#lab-post"],
+  "openai.com": ["#lab-post"],
+  "deepmind.google": ["#lab-post"],
+  "huggingface.co": ["#ml", "#models"],
+  "x.com": ["#social"],
+  "twitter.com": ["#social"],
+  "news.ycombinator.com": ["#discussion"]
+}

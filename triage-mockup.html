@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1400" />
+<title>RIL — Triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f8f5f0;
+    --card: #fffdf9;
+    --ink: #1a1613;
+    --warm-gray: #e8e2da;
+    --muted: #9a918a;
+    --sage: #5a7a62;
+    --sage-tint: rgba(90, 122, 98, 0.08);
+    --rose: #b35a5a;
+    --rose-tint: rgba(179, 90, 90, 0.08);
+    --amber: #c8713a;
+    --shadow: rgba(26, 22, 19, 0.06);
+    --shadow-deep: rgba(26, 22, 19, 0.10);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Paper texture overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.6'/></svg>");
+    opacity: 0.03;
+    z-index: 1000;
+  }
+
+  .container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 40px;
+  }
+  .wordmark {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+  }
+  .topbar-meta {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Two-column grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 48px;
+    align-items: start;
+  }
+
+  /* Section headers */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 0;
+  }
+  .section-title {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+  }
+  .section-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .section-meta .count-dot { color: var(--warm-gray); }
+
+  /* Chip button */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--warm-gray);
+    border-radius: 6px;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chip:hover {
+    background: var(--card);
+    border-color: var(--ink);
+  }
+  .chip.danger { color: var(--rose); border-color: rgba(179, 90, 90, 0.3); }
+  .chip.danger:hover { background: var(--rose-tint); border-color: var(--rose); }
+  .chip svg { width: 11px; height: 11px; stroke-width: 2; }
+
+  /* Domain group card */
+  .group {
+    background: var(--card);
+    border: 1px solid var(--warm-gray);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px var(--shadow);
+    animation: fadeUp 0.4s ease both;
+  }
+  .group:nth-child(1) { animation-delay: 0.05s; }
+  .group:nth-child(2) { animation-delay: 0.1s; }
+  .group:nth-child(3) { animation-delay: 0.15s; }
+  .group:nth-child(4) { animation-delay: 0.2s; }
+  .group:nth-child(5) { animation-delay: 0.25s; }
+
+  .group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 14px 18px;
+    border-bottom: 1px solid var(--warm-gray);
+  }
+  .group-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.1px;
+  }
+  .count-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 10px;
+    padding: 2px 8px;
+    border: 1px solid var(--warm-gray);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+    text-transform: lowercase;
+  }
+  .count-chip svg { width: 10px; height: 10px; opacity: 0.7; }
+
+  /* Item row */
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--warm-gray);
+    transition: background 0.12s ease;
+    cursor: pointer;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: rgba(232, 226, 218, 0.35); }
+  .item:hover .actions { opacity: 1; }
+
+  .item.selected {
+    background: rgba(200, 113, 58, 0.06);
+    box-shadow: inset 2px 0 0 var(--amber);
+  }
+  .item.selected .actions { opacity: 1; }
+
+  .favicon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .fav-yt  { background: #ff0000; }
+  .fav-gh  { background: #1a1613; }
+  .fav-arx { background: #b31b1b; }
+  .fav-sub { background: #ff6719; }
+  .fav-anth { background: #c8713a; }
+  .fav-every { background: #5a6b7a; }
+  .fav-x   { background: #000000; }
+  .fav-ls  { background: #5a7a62; }
+
+  .item-body { flex: 1; min-width: 0; }
+  .item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .item-meta {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .item-meta .dot {
+    width: 2px; height: 2px; border-radius: 50%;
+    background: var(--warm-gray);
+    display: inline-block;
+  }
+  .item-meta .fail-flag {
+    color: var(--amber);
+    font-weight: 500;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+  }
+  .act-btn {
+    width: 26px; height: 26px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.12s ease;
+  }
+  .act-btn svg { width: 13px; height: 13px; stroke-width: 2; }
+  .act-btn.save:hover {
+    color: var(--sage);
+    background: var(--sage-tint);
+    border-color: rgba(90, 122, 98, 0.25);
+  }
+  .act-btn.arch:hover {
+    color: var(--rose);
+    background: var(--rose-tint);
+    border-color: rgba(179, 90, 90, 0.25);
+  }
+
+  /* Bulk action at group head */
+  .bulk {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--warm-gray);
+    border-radius: 5px;
+    background: transparent;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: all 0.12s ease;
+  }
+  .bulk:hover { color: var(--rose); border-color: rgba(179, 90, 90, 0.3); background: var(--rose-tint); }
+  .bulk svg { width: 10px; height: 10px; }
+
+  /* Right sidebar */
+  .sidebar {
+    position: sticky;
+    top: 48px;
+  }
+  .saved-section .section-title { font-size: 22px; }
+
+  .saved-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--warm-gray);
+    cursor: pointer;
+  }
+  .saved-item:last-of-type { border-bottom: none; }
+  .saved-item:hover .saved-close { opacity: 1; }
+
+  .saved-check {
+    flex-shrink: 0;
+    margin-top: 2px;
+    width: 14px; height: 14px;
+    border: 1px solid var(--warm-gray);
+    border-radius: 3px;
+    background: var(--card);
+    transition: all 0.15s;
+  }
+  .saved-item:hover .saved-check { border-color: var(--sage); }
+
+  .saved-body { flex: 1; min-width: 0; }
+  .saved-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.35;
+  }
+  .saved-title .mini-fav {
+    flex-shrink: 0;
+    width: 14px; height: 14px;
+    border-radius: 2.5px;
+    font-size: 8px;
+  }
+  .saved-title .text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .saved-meta {
+    margin-top: 3px;
+    font-size: 10.5px;
+    color: var(--muted);
+    letter-spacing: 0.1px;
+  }
+  .saved-close {
+    width: 18px; height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s, color 0.12s;
+  }
+  .saved-close:hover { color: var(--rose); }
+  .saved-close svg { width: 11px; height: 11px; }
+
+  /* Archive collapsed */
+  .archive-row {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 0;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    border-top: 1px dashed var(--warm-gray);
+  }
+  .archive-row:hover { color: var(--ink); }
+  .archive-row svg { width: 12px; height: 12px; }
+
+  /* Keyboard hint */
+  .kbd-hint {
+    position: fixed;
+    bottom: 20px; right: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--card);
+    border: 1px solid var(--warm-gray);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--paper);
+    border: 1px solid var(--warm-gray);
+    border-radius: 3px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink);
+    min-width: 14px;
+    text-align: center;
+  }
+
+  /* FadeUp animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .saved-section, .topbar { animation: fadeUp 0.4s ease both; animation-delay: 0.1s; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="topbar">
+    <div class="wordmark">ril.</div>
+    <div class="topbar-meta">sun · apr 19 · 2026</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ INBOX (left) ============ -->
+    <div>
+      <div class="section-head">
+        <div class="section-title">Inbox</div>
+        <div class="section-meta">
+          <span>12 items</span>
+          <span class="count-dot">·</span>
+          <span>5 domains</span>
+          <button class="chip danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Archive all 12
+          </button>
+        </div>
+      </div>
+
+      <!-- YouTube -->
+      <div class="group">
+        <div class="group-head">
+          <div>
+            <span class="group-title">YouTube</span>
+            <span class="count-chip">3 items</span>
+          </div>
+          <button class="bulk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            archive all 3
+          </button>
+        </div>
+
+        <div class="item selected">
+          <span class="favicon fav-yt">▶</span>
+          <div class="item-body">
+            <div class="item-title">Dylan Field: The New Design Playbook in the AI Era</div>
+            <div class="item-meta"><span>youtube.com</span><span class="dot"></span><span>2 days ago</span><span class="dot"></span><span>52 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save" title="Save (s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch" title="Archive (e)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-yt">▶</span>
+          <div class="item-body">
+            <div class="item-title">Andrej Karpathy — State of GPT 2026</div>
+            <div class="item-meta"><span>youtube.com</span><span class="dot"></span><span>3 days ago</span><span class="dot"></span><span>1 hr 8 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-yt">▶</span>
+          <div class="item-body">
+            <div class="item-title">How AI agents and Claude skills work together</div>
+            <div class="item-meta"><span>youtube.com</span><span class="dot"></span><span>4 days ago</span><span class="dot"></span><span>34 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- arxiv -->
+      <div class="group">
+        <div class="group-head">
+          <div>
+            <span class="group-title">arXiv</span>
+            <span class="count-chip">3 items</span>
+          </div>
+          <button class="bulk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            archive all 3
+          </button>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-arx">χ</span>
+          <div class="item-body">
+            <div class="item-title">Reasoning via Iterative Self-Critique: Scaling Test-Time Compute for Agents</div>
+            <div class="item-meta"><span>arxiv.org</span><span class="dot"></span><span>1 day ago</span><span class="dot"></span><span>28 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-arx">χ</span>
+          <div class="item-body">
+            <div class="item-title">A Survey of Long-Context Retrieval Methods in Large Language Models</div>
+            <div class="item-meta"><span>arxiv.org</span><span class="dot"></span><span>2 days ago</span><span class="dot"></span><span>42 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-arx">χ</span>
+          <div class="item-body">
+            <div class="item-title">Constitutional AI II: Multi-Turn Alignment via Principled Self-Supervision</div>
+            <div class="item-meta"><span>arxiv.org</span><span class="dot"></span><span>5 days ago</span><span class="dot"></span><span>35 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Substack -->
+      <div class="group">
+        <div class="group-head">
+          <div>
+            <span class="group-title">Substack</span>
+            <span class="count-chip">2 items</span>
+          </div>
+          <button class="bulk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            archive all 2
+          </button>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-sub">S</span>
+          <div class="item-body">
+            <div class="item-title">The ChatGPT Moment, Three Years On — What We Got Right and Wrong</div>
+            <div class="item-meta"><span>stratechery.com</span><span class="dot"></span><span>2 days ago</span><span class="dot"></span><span>18 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-every">E</span>
+          <div class="item-body">
+            <div class="item-title">Why AI Code Assistants Are Quietly Winning the Dev Stack</div>
+            <div class="item-meta"><span>every.to</span><span class="dot"></span><span>4 days ago</span><span class="dot"></span><span>14 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GitHub -->
+      <div class="group">
+        <div class="group-head">
+          <div>
+            <span class="group-title">GitHub</span>
+            <span class="count-chip">3 items</span>
+          </div>
+          <button class="bulk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            archive all 3
+          </button>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-gh">●</span>
+          <div class="item-body">
+            <div class="item-title">zarazhangrui/tab-out — AI-powered browser tab manager</div>
+            <div class="item-meta"><span>github.com</span><span class="dot"></span><span>3 days ago</span><span class="dot"></span><span>5 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-gh">●</span>
+          <div class="item-body">
+            <div class="item-title">anthropics/courses — Applied AI engineering curriculum</div>
+            <div class="item-meta"><span>github.com</span><span class="dot"></span><span>4 days ago</span><span class="dot"></span><span>8 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-gh">●</span>
+          <div class="item-body">
+            <div class="item-title">langchain-ai/langgraph — Framework for long-running, stateful agents</div>
+            <div class="item-meta"><span>github.com</span><span class="dot"></span><span>5 days ago</span><span class="dot"></span><span>6 min</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other / single items -->
+      <div class="group">
+        <div class="group-head">
+          <div>
+            <span class="group-title">Other</span>
+            <span class="count-chip">1 item</span>
+          </div>
+        </div>
+
+        <div class="item">
+          <span class="favicon fav-x">𝕏</span>
+          <div class="item-body">
+            <div class="item-title">x.com/karpathy/status/1789432114…</div>
+            <div class="item-meta"><span>x.com</span><span class="dot"></span><span>1 day ago</span><span class="dot"></span><span class="fail-flag">couldn't extract — URL only</span></div>
+          </div>
+          <div class="actions">
+            <button class="act-btn save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="act-btn arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ============ SAVED FOR LATER (right) ============ -->
+    <aside class="sidebar saved-section">
+      <div class="section-head">
+        <div class="section-title">Saved for later</div>
+        <div class="section-meta"><span>3 items</span></div>
+      </div>
+
+      <div class="saved-item">
+        <div class="saved-check"></div>
+        <div class="saved-body">
+          <div class="saved-title">
+            <span class="mini-fav fav-anth">A</span>
+            <span class="text">Building effective agents</span>
+          </div>
+          <div class="saved-meta">anthropic.com · 2 days ago · 16 min</div>
+        </div>
+        <div class="saved-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </div>
+      </div>
+
+      <div class="saved-item">
+        <div class="saved-check"></div>
+        <div class="saved-body">
+          <div class="saved-title">
+            <span class="mini-fav fav-ls">L</span>
+            <span class="text">Latent Space #142 — The Year of Agents</span>
+          </div>
+          <div class="saved-meta">latent.space · 3 days ago · 1 hr 12 min</div>
+        </div>
+        <div class="saved-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </div>
+      </div>
+
+      <div class="saved-item">
+        <div class="saved-check"></div>
+        <div class="saved-body">
+          <div class="saved-title">
+            <span class="mini-fav fav-sub">S</span>
+            <span class="text">The vertical AI startup playbook</span>
+          </div>
+          <div class="saved-meta">stratechery.com · 5 days ago · 22 min</div>
+        </div>
+        <div class="saved-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </div>
+      </div>
+
+      <div class="archive-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        <span>Archive</span>
+        <span style="color: var(--warm-gray);">·</span>
+        <span style="color: var(--muted);">14</span>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Floating keyboard hint -->
+<div class="kbd-hint">
+  <span class="kbd">j</span><span class="kbd">k</span>
+  <span>move</span>
+  <span style="color: var(--warm-gray);">·</span>
+  <span class="kbd">s</span><span>save</span>
+  <span style="color: var(--warm-gray);">·</span>
+  <span class="kbd">e</span><span>archive</span>
+  <span style="color: var(--warm-gray);">·</span>
+  <span class="kbd">?</span><span>help</span>
+</div>
+
+</body>
+</html>

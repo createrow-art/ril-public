@@ -1,0 +1,10 @@
+node_modules/
+node_modules 2/
+.env
+dist/
+*.log
+.DS_Store
+.vscode/
+.idea/
+config/settings.json
+config/interest-profile.json

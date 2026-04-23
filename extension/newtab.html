@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RIL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital,wght@1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="newtab.css" />
+</head>
+<body>
+  <div class="noise"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="wordmark">RIL</div>
+      <nav class="tabs">
+        <button class="tab active" data-folder="Inbox">Inbox <span class="tab-count" id="count-inbox">…</span></button>
+        <button class="tab" data-folder="Saved">Saved <span class="tab-count" id="count-saved">…</span></button>
+        <button class="tab" data-folder="Archive">Archive <span class="tab-count" id="count-archive">…</span></button>
+      </nav>
+      <div class="header-right">
+        <div class="group-toggle">
+          <button class="toggle-btn active" data-group="domain">Domain</button>
+          <button class="toggle-btn" data-group="tag">Tag</button>
+          <button class="toggle-btn" data-group="time">Time</button>
+          <button class="toggle-btn smart-toggle hidden" data-group="smart">Smart ✦</button>
+        </div>
+        <button class="settings-btn" id="settings-btn" title="Settings">⚙</button>
+        <button class="help-btn" id="help-btn" title="Keyboard shortcuts (?)">?</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- URL bar -->
+  <div class="url-bar-wrap">
+    <div class="url-bar-inner">
+      <input class="url-input" id="url-input" type="url" placeholder="Paste or type a URL to save…" autocomplete="off" spellcheck="false" />
+      <button class="url-submit" id="url-submit">Save</button>
+    </div>
+  </div>
+
+  <!-- Profile strip (visible when Smart Mode on + profile exists) -->
+  <div class="profile-strip hidden" id="profile-strip">
+    <div class="profile-strip-inner">
+      <span class="profile-strip-label">Your focus:</span>
+      <span class="profile-strip-topics" id="profile-strip-topics"></span>
+      <button class="profile-refresh-btn" id="profile-refresh-btn">Refresh</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="container" id="main-container">
+      <!-- Domain filter pills -->
+      <div class="domain-bar hidden" id="domain-bar"></div>
+
+      <div class="loading" id="loading">Loading…</div>
+      <div class="caught-up hidden" id="caught-up">
+        <div class="caught-up-icon">✓</div>
+        <div class="caught-up-title">All caught up</div>
+        <div class="caught-up-sub" id="caught-up-sub">Nothing in your inbox</div>
+      </div>
+      <div class="error hidden" id="error-state">
+        <div class="error-icon">⚠</div>
+        <div class="error-title">Can't reach RIL service</div>
+        <div class="error-sub">Make sure <code>npm run dev</code> is running in your RIL folder, then refresh.</div>
+      </div>
+      <div class="groups" id="groups"></div>
+    </div>
+  </main>
+
+  <!-- Undo toast -->
+  <div class="toast hidden" id="toast">
+    <span id="toast-msg"></span>
+    <button id="toast-undo">Undo</button>
+  </div>
+
+  <!-- Settings overlay -->
+  <div class="overlay hidden" id="settings-overlay">
+    <div class="overlay-card">
+      <div class="overlay-title">Settings</div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Smart Mode <span class="setting-badge">✦ AI</span></div>
+          <div class="setting-desc">Scores articles by relevance to your interests and surfaces a Smart sort view.</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="smart-mode-toggle" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="profile-section hidden" id="profile-section">
+        <div class="profile-section-header">
+          <span class="profile-section-title">Interest profile</span>
+          <button class="profile-regen-btn" id="profile-regen-btn">Regenerate</button>
+        </div>
+        <div class="profile-summary" id="profile-summary-text">—</div>
+        <div class="profile-topics-list" id="profile-topics-list"></div>
+        <div class="profile-age" id="profile-age"></div>
+      </div>
+
+      <button class="overlay-close" id="settings-close">Close</button>
+    </div>
+  </div>
+
+  <!-- Help overlay -->
+  <div class="overlay hidden" id="help-overlay">
+    <div class="overlay-card">
+      <div class="overlay-title">Keyboard shortcuts</div>
+      <div class="shortcuts">
+        <div class="shortcut-row"><kbd>j</kbd><kbd>↓</kbd><span>Next item</span></div>
+        <div class="shortcut-row"><kbd>k</kbd><kbd>↑</kbd><span>Previous item</span></div>
+        <div class="shortcut-row"><kbd>s</kbd><span>Save for later</span></div>
+        <div class="shortcut-row"><kbd>e</kbd><span>Archive</span></div>
+        <div class="shortcut-row"><kbd>x</kbd><span>Trash</span></div>
+        <div class="shortcut-row"><kbd>o</kbd><span>Open original URL</span></div>
+        <div class="shortcut-row"><kbd>Enter</kbd><span>Open in Obsidian</span></div>
+        <div class="shortcut-row"><kbd>u</kbd><span>Undo last action</span></div>
+        <div class="shortcut-row"><kbd>t</kbd><span>Toggle Domain / Tag grouping</span></div>
+        <div class="shortcut-row"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><span>Switch Inbox / Saved / Archive</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>This help</span></div>
+        <div class="shortcut-row"><kbd>a</kbd><span>Focus URL bar</span></div>
+        <div class="shortcut-row"><kbd>Esc</kbd><span>Close overlay</span></div>
+      </div>
+      <button class="overlay-close" id="overlay-close">Close</button>
+    </div>
+  </div>
+
+  <script src="newtab.js"></script>
+</body>
+</html>

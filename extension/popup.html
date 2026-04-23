@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Save to RIL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital,wght@1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <!-- Save form -->
+  <div id="view-form">
+    <div class="popup-header">
+      <span class="wordmark">RIL</span>
+      <span class="header-label">Save to Inbox</span>
+    </div>
+    <div class="popup-body">
+      <div class="field">
+        <label class="field-label">URL</label>
+        <input class="field-input url-field" id="url-input" type="url" placeholder="https://…" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="field">
+        <label class="field-label">Note <span class="optional">optional</span></label>
+        <input class="field-input" id="note-input" type="text" placeholder="Why you're saving this…" autocomplete="off" />
+      </div>
+      <div id="error-msg" class="error-msg hidden">Could not save — is the RIL service running?</div>
+    </div>
+    <div class="popup-footer">
+      <button class="btn-primary" id="save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- Success state -->
+  <div id="view-success" class="hidden">
+    <div class="success-body">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Saved to Inbox</div>
+      <div class="success-sub" id="success-sub">Article extracted and saved.</div>
+    </div>
+    <div class="popup-footer success-footer">
+      <button class="btn-secondary" id="open-ril-btn">Open RIL</button>
+      <button class="btn-ghost" id="close-btn">Close</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
