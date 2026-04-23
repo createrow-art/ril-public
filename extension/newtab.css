@@ -740,13 +740,22 @@ kbd {
 
 .settings-btn:hover { border-color: var(--muted); color: var(--ink); }
 
-.sort-toggle {
-  display: flex;
-  background: var(--surface-2);
-  border-radius: 6px;
-  padding: 3px;
-  gap: 2px;
+.sort-pill {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
 }
+.sort-pill:hover { color: var(--ink); border-color: var(--muted); }
+.sort-pill.active { color: var(--accent-text); border-color: var(--accent); background: var(--accent-tint); }
 
 /* Smart toggle — accent tint when active */
 .toggle-btn.active[data-group="smart"] {

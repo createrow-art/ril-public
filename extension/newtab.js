@@ -251,6 +251,18 @@ function renderFilterBar() {
       pill.addEventListener('click', () => { state.timePeriod = p.key; render(); });
       bar.appendChild(pill);
     }
+    if (state.smartMode) {
+      const sortBtn = document.createElement('button');
+      sortBtn.className = 'sort-pill' + (state.sortBy === 'score' ? ' active' : '');
+      sortBtn.textContent = state.sortBy === 'score' ? '↓ Score' : '↓ Date';
+      sortBtn.title = 'Toggle sort order';
+      sortBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        state.sortBy = state.sortBy === 'date' ? 'score' : 'date';
+        render();
+      });
+      bar.appendChild(sortBtn);
+    }
     return;
   }
 
@@ -294,6 +306,20 @@ function renderFilterBar() {
       render();
     });
     bar.appendChild(pill);
+  }
+
+  // Sort pill — far right, only when Smart Mode is on
+  if (state.smartMode) {
+    const sortBtn = document.createElement('button');
+    sortBtn.className = 'sort-pill' + (state.sortBy === 'score' ? ' active' : '');
+    sortBtn.textContent = state.sortBy === 'score' ? '↓ Score' : '↓ Date';
+    sortBtn.title = 'Toggle sort order';
+    sortBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.sortBy = state.sortBy === 'date' ? 'score' : 'date';
+      render();
+    });
+    bar.appendChild(sortBtn);
   }
 }
 
@@ -780,15 +806,6 @@ document.querySelectorAll('.toggle-btn').forEach((btn) => {
   btn.addEventListener('click', () => toggleGroupBy(btn.dataset.group));
 });
 
-document.querySelectorAll('.sort-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    state.sortBy = btn.dataset.sort;
-    document.querySelectorAll('.sort-btn').forEach((b) => {
-      b.classList.toggle('active', b.dataset.sort === state.sortBy);
-    });
-    render();
-  });
-});
 
 document.getElementById('help-btn').addEventListener('click', () => {
   document.getElementById('help-overlay').classList.remove('hidden');
@@ -887,22 +904,15 @@ async function loadProfile() {
 
 function applySmartMode() {
   const profileSection = document.getElementById('profile-section');
-  const sortToggle = document.getElementById('sort-toggle');
   document.querySelectorAll('.toggle-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.group === state.groupBy);
   });
 
   if (state.smartMode) {
     profileSection.classList.remove('hidden');
-    sortToggle.classList.remove('hidden');
   } else {
     profileSection.classList.add('hidden');
-    sortToggle.classList.add('hidden');
-    // Reset sort to date when smart mode turns off
     state.sortBy = 'date';
-    document.querySelectorAll('.sort-btn').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.sort === 'date');
-    });
   }
 }
 
