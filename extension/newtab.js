@@ -68,7 +68,6 @@ function getYoutubeThumbnail(url) {
 
 function visibleGroups() {
   if (state.groupBy === 'time') return timeGroups();
-  if (state.groupBy === 'smart') return smartGroups();
   if (!state.activeDomain) return state.groups;
   return state.groups.filter((g) => g.key === state.activeDomain);
 }
@@ -218,8 +217,6 @@ function showError() {
 
 function renderFilterBar() {
   const bar = document.getElementById('domain-bar');
-
-  if (state.groupBy === 'smart') { bar.classList.add('hidden'); return; }
 
   if (state.groupBy === 'time') {
     // Period selector
@@ -466,12 +463,12 @@ function buildItemEl(item, flatIdx) {
     meta.appendChild(rt);
   }
 
-  // Score badge (smart mode)
+  // Score badge (smart mode — subtle signal on all views)
   if (state.smartMode && item.relevanceScore !== null && item.relevanceScore !== undefined) {
     const s = item.relevanceScore;
     const badge = document.createElement('span');
     badge.className = 'item-score ' + (s >= 7 ? 'high' : s >= 4 ? 'mid' : 'low');
-    badge.textContent = `${s}/10`;
+    badge.textContent = s;
     meta.appendChild(badge);
   }
 
@@ -651,10 +648,9 @@ function toggleGroupBy(groupBy) {
   if (groupBy) {
     state.groupBy = groupBy;
   } else {
-    // Cycle: domain → tag → time → (smart if on) → domain
+    // Cycle: domain → tag → time → domain
     if (state.groupBy === 'domain') state.groupBy = 'tag';
     else if (state.groupBy === 'tag') state.groupBy = 'time';
-    else if (state.groupBy === 'time') state.groupBy = state.smartMode ? 'smart' : 'domain';
     else state.groupBy = 'domain';
   }
   state.activeDomain = null;
@@ -861,30 +857,19 @@ async function loadProfile() {
     if (!res.ok) { state.profile = null; return; }
     state.profile = await res.json();
     renderProfileInOverlay();
-    renderProfileStrip();
   } catch { state.profile = null; }
 }
 
 function applySmartMode() {
-  const smartBtn = document.querySelector('.smart-toggle');
-  const profileStrip = document.getElementById('profile-strip');
   const profileSection = document.getElementById('profile-section');
   document.querySelectorAll('.toggle-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.group === state.groupBy);
   });
 
   if (state.smartMode) {
-    smartBtn.classList.remove('hidden');
     profileSection.classList.remove('hidden');
-    renderProfileStrip();
   } else {
-    smartBtn.classList.add('hidden');
-    profileStrip.classList.add('hidden');
     profileSection.classList.add('hidden');
-    if (state.groupBy === 'smart') {
-      state.groupBy = 'domain';
-      load();
-    }
   }
 }
 
@@ -902,14 +887,6 @@ function renderProfileInOverlay() {
   if (state.profile.generatedAt) {
     document.getElementById('profile-age').textContent = `Updated ${relativeTime(state.profile.generatedAt)}`;
   }
-}
-
-function renderProfileStrip() {
-  if (!state.profile || !state.smartMode) return;
-  const topics = state.profile.topics || [];
-  if (topics.length === 0) return;
-  document.getElementById('profile-strip-topics').textContent = topics.join(' · ');
-  document.getElementById('profile-strip').classList.remove('hidden');
 }
 
 // Settings overlay
@@ -944,28 +921,9 @@ document.getElementById('profile-regen-btn').addEventListener('click', async () 
     if (res.ok) {
       state.profile = await res.json();
       renderProfileInOverlay();
-      renderProfileStrip();
     }
   } catch {}
   btn.textContent = 'Regenerate';
-  btn.disabled = false;
-});
-
-// Profile strip refresh
-document.getElementById('profile-refresh-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('profile-refresh-btn');
-  btn.textContent = 'Refreshing…';
-  btn.disabled = true;
-  try {
-    const res = await fetch(`${API}/api/profile/refresh`, { method: 'POST' });
-    if (res.ok) {
-      state.profile = await res.json();
-      renderProfileInOverlay();
-      renderProfileStrip();
-      if (state.groupBy === 'smart') load();
-    }
-  } catch {}
-  btn.textContent = 'Refresh';
   btn.disabled = false;
 });
 
