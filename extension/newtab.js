@@ -16,6 +16,7 @@ const state = {
   toastTimer: null,
   smartMode: false,
   profile: null,
+  sortBy: 'date', // 'date' | 'score'
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -88,6 +89,20 @@ function smartGroups() {
     });
     return { key: tier.key, label: tier.label, count: tierItems.length, items: tierItems };
   }).filter(g => g.items.length > 0);
+}
+
+function sortGroupItems(items) {
+  if (state.sortBy === 'score') {
+    return [...items].sort((a, b) => {
+      const sa = a.relevanceScore ?? -1;
+      const sb = b.relevanceScore ?? -1;
+      return sb - sa;
+    });
+  }
+  // default: newest first
+  return [...items].sort((a, b) =>
+    new Date(b.savedAt || 0).getTime() - new Date(a.savedAt || 0).getTime()
+  );
 }
 
 // All items across all groups, de-duped (ignores domain filter)
@@ -375,8 +390,8 @@ function render() {
 
     groupEl.appendChild(header);
 
-    // Items
-    for (const item of group.items) {
+    // Items (sorted within group)
+    for (const item of sortGroupItems(group.items)) {
       const flatIdx = items.indexOf(item);
       const itemEl = buildItemEl(item, flatIdx);
       groupEl.appendChild(itemEl);
@@ -765,6 +780,16 @@ document.querySelectorAll('.toggle-btn').forEach((btn) => {
   btn.addEventListener('click', () => toggleGroupBy(btn.dataset.group));
 });
 
+document.querySelectorAll('.sort-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    state.sortBy = btn.dataset.sort;
+    document.querySelectorAll('.sort-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.sort === state.sortBy);
+    });
+    render();
+  });
+});
+
 document.getElementById('help-btn').addEventListener('click', () => {
   document.getElementById('help-overlay').classList.remove('hidden');
 });
@@ -862,14 +887,22 @@ async function loadProfile() {
 
 function applySmartMode() {
   const profileSection = document.getElementById('profile-section');
+  const sortToggle = document.getElementById('sort-toggle');
   document.querySelectorAll('.toggle-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.group === state.groupBy);
   });
 
   if (state.smartMode) {
     profileSection.classList.remove('hidden');
+    sortToggle.classList.remove('hidden');
   } else {
     profileSection.classList.add('hidden');
+    sortToggle.classList.add('hidden');
+    // Reset sort to date when smart mode turns off
+    state.sortBy = 'date';
+    document.querySelectorAll('.sort-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.sort === 'date');
+    });
   }
 }
 

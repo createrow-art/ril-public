@@ -740,6 +740,14 @@ kbd {
 
 .settings-btn:hover { border-color: var(--muted); color: var(--ink); }
 
+.sort-toggle {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 3px;
+  gap: 2px;
+}
+
 /* Smart toggle — accent tint when active */
 .toggle-btn.active[data-group="smart"] {
   background: var(--accent-tint);
