@@ -39,6 +39,8 @@ Open `.env` and fill in:
 - `VAULT_PATH` — a folder where your articles will be saved (e.g. `/Users/yourname/Documents/RIL`). It will be created automatically on first run.
 - `ANTHROPIC_API_KEY` — your Anthropic API key from [console.anthropic.com](https://console.anthropic.com). Optional — the app works without it but tagging and Smart Mode will be off.
 
+  > **Already using Claude Code?** If you set it up with an API key, run `echo $ANTHROPIC_API_KEY` in your terminal. If it prints a key, you're done — RIL picks it up automatically and you can skip this line in `.env`.
+
 ### 3. Start the server
 
 ```bash
