@@ -914,13 +914,21 @@ document.getElementById('smart-mode-toggle').addEventListener('change', async (e
 // Profile regenerate
 document.getElementById('profile-regen-btn').addEventListener('click', async () => {
   const btn = document.getElementById('profile-regen-btn');
-  btn.textContent = 'Building…';
+  btn.textContent = 'Building profile…';
   btn.disabled = true;
   try {
     const res = await fetch(`${API}/api/profile/refresh`, { method: 'POST' });
     if (res.ok) {
-      state.profile = await res.json();
+      const data = await res.json();
+      state.profile = data;
       renderProfileInOverlay();
+      // If items are being scored in background, reload after a delay
+      if (data.unscoredCount > 0) {
+        btn.textContent = `Scoring ${data.unscoredCount} items…`;
+        const perItem = 1500; // ~1.5s per LLM call
+        const wait = Math.min(data.unscoredCount * perItem, 30000);
+        setTimeout(() => { load(true); }, wait);
+      }
     }
   } catch {}
   btn.textContent = 'Regenerate';

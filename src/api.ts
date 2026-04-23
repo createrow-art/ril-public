@@ -173,7 +173,24 @@ app.get('/api/profile', async (c) => {
 app.post('/api/profile/refresh', async (c) => {
   const items = await listItems(config.vaultPath);
   const profile = await buildProfile(items);
-  return c.json(profile);
+
+  // Background: score any unscored items against the fresh profile
+  if (profile.topics.length > 0) {
+    const unscored = items.filter((i) => i.relevanceScore === null || i.relevanceScore === undefined);
+    if (unscored.length > 0) {
+      (async () => {
+        for (const item of unscored.slice(0, 100)) {
+          try {
+            const score = await scoreItem(item, profile);
+            await updateItemScore(config.vaultPath, item.id, score);
+          } catch {}
+        }
+        console.log(`(scored ${Math.min(unscored.length, 100)} unscored items)`);
+      })();
+    }
+  }
+
+  return c.json({ ...profile, unscoredCount: items.filter((i) => i.relevanceScore === null || i.relevanceScore === undefined).length });
 });
 
 // Serve the extension UI as a local web app
