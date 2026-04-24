@@ -543,7 +543,7 @@ function buildActionBtn(icon, cls, title) {
 }
 
 // ── Focus management ──────────────────────────────────────────────────────────
-function updateFocus() {
+function updateFocus(scroll = true) {
   document.querySelectorAll('.item').forEach((el) => el.classList.remove('focused'));
   const items = document.querySelectorAll('.item');
   if (items.length === 0) return;
@@ -552,7 +552,7 @@ function updateFocus() {
   const focused = items[idx];
   if (focused) {
     focused.classList.add('focused');
-    focused.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (scroll) focused.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
 
@@ -589,7 +589,7 @@ async function triggerAction(item, action) {
   const scrollY = window.scrollY;
   render();
   window.scrollTo(0, scrollY);
-  updateFocus();
+  updateFocus(false); // don't scrollIntoView — we're restoring position
 
   // Store for undo (not for trash — can't recover deleted files)
   if (action !== 'trash') {
