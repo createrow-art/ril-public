@@ -62,7 +62,7 @@ export async function listItems(
           title: data.title || file,
           site: derivedDomain,
           domain: derivedDomain,
-          savedAt: data.saved_at || data.clipped || data.created || '',
+          savedAt: data.saved_at || data.clipped || data.created || data.published_at || data.date || '',
           status: data.status || 'inbox',
           tags: Array.isArray(data.tags) ? data.tags : [],
           note: data.note || null,
