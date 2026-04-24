@@ -1,6 +1,6 @@
 // In Chrome extension: use absolute localhost URL
 // When served from the Node server (mobile/web): use relative paths
-const API = location.protocol === 'chrome-extension:' ? 'http://localhost:3000' : '';
+const API = location.protocol === 'chrome-extension:' ? 'http://localhost:3001' : '';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const state = {

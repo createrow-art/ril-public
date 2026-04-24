@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000';
+const API = 'http://localhost:3001';
 
 const urlInput   = document.getElementById('url-input');
 const noteInput  = document.getElementById('note-input');
