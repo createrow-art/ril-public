@@ -13,7 +13,7 @@ app.use('*', cors({
   origin: (origin) => {
     if (!origin) return null;
     if (origin.startsWith('chrome-extension://')) return origin;
-    if (origin === 'http://localhost:3000') return origin;
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return origin;
     return null;
   },
   allowMethods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
