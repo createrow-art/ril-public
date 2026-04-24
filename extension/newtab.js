@@ -67,6 +67,16 @@ function getYoutubeThumbnail(url) {
   return null;
 }
 
+function buildThumbTile(item) {
+  const tile = document.createElement('div');
+  tile.className = 'item-thumb-tile';
+  const letter = document.createElement('span');
+  letter.className = 'item-thumb-letter';
+  letter.textContent = (item.domain || item.site || '?').charAt(0).toUpperCase();
+  tile.appendChild(letter);
+  return tile;
+}
+
 function visibleGroups() {
   if (state.groupBy === 'time') return timeGroups();
   if (!state.activeDomain) return state.groups;
@@ -431,11 +441,12 @@ function render() {
 
 function buildItemEl(item, flatIdx) {
   const el = document.createElement('div');
-  el.className = 'item';
+  const highScore = state.smartMode && item.relevanceScore >= 8;
+  el.className = 'item' + (highScore ? ' score-high' : '');
   el.dataset.id = item.id;
   el.dataset.idx = flatIdx;
 
-  // YouTube thumbnail
+  // Thumbnail: YouTube image or typographic article tile
   const thumb = getYoutubeThumbnail(item.url);
   if (thumb) {
     const img = document.createElement('img');
@@ -443,8 +454,10 @@ function buildItemEl(item, flatIdx) {
     img.src = thumb;
     img.alt = '';
     img.loading = 'lazy';
-    img.onerror = () => img.remove();
+    img.onerror = () => img.replaceWith(buildThumbTile(item));
     el.appendChild(img);
+  } else {
+    el.appendChild(buildThumbTile(item));
   }
 
   // Title + timestamp column
@@ -504,13 +517,24 @@ function buildItemEl(item, flatIdx) {
     meta.appendChild(rt);
   }
 
-  // Score badge (smart mode — subtle signal on all views)
+  // Score bar (smart mode — subtle signal on all views)
   if (state.smartMode && item.relevanceScore !== null && item.relevanceScore !== undefined) {
     const s = item.relevanceScore;
-    const badge = document.createElement('span');
-    badge.className = 'item-score ' + (s >= 7 ? 'high' : s >= 4 ? 'mid' : 'low');
-    badge.textContent = s;
-    meta.appendChild(badge);
+    const isHigh = s >= 8;
+    const wrap = document.createElement('div');
+    wrap.className = 'item-score-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'item-score-bar';
+    const fill = document.createElement('div');
+    fill.className = 'item-score-fill' + (isHigh ? ' high' : '');
+    fill.style.width = (s * 10) + '%';
+    bar.appendChild(fill);
+    const num = document.createElement('span');
+    num.className = 'item-score-num' + (isHigh ? ' high' : '');
+    num.textContent = s;
+    wrap.appendChild(bar);
+    wrap.appendChild(num);
+    meta.appendChild(wrap);
   }
 
   el.appendChild(meta);
