@@ -41,6 +41,24 @@ export function getDomain(url: string): string {
   }
 }
 
+const MAX_HTML_BYTES = 2 * 1024 * 1024; // 2 MB
+
+/** Block loopback and RFC 1918 / link-local targets to prevent SSRF. */
+function isPrivateUrl(urlStr: string): boolean {
+  try {
+    const { hostname } = new URL(urlStr);
+    if (/^(localhost|127\.\d+\.\d+\.\d+|::1)$/i.test(hostname)) return true;
+    if (/^10\.\d+\.\d+\.\d+$/.test(hostname)) return true;
+    if (/^192\.168\.\d+\.\d+$/.test(hostname)) return true;
+    if (/^169\.254\.\d+\.\d+$/.test(hostname)) return true;
+    const m = hostname.match(/^172\.(\d+)\.\d+\.\d+$/);
+    if (m && Number(m[1]) >= 16 && Number(m[1]) <= 31) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function isXUrl(url: string): boolean {
   try {
     const host = new URL(url).hostname.replace(/^www\./, '');
@@ -89,6 +107,11 @@ async function extractViaJina(url: string): Promise<Extracted> {
 }
 
 export async function extract(url: string): Promise<Extracted> {
+  if (isPrivateUrl(url)) {
+    console.warn(`  ✗ blocked private URL: ${url}`);
+    return { title: url, author: null, contentMarkdown: '', contentText: '', publishedAt: null, readingTimeMin: null, canonicalUrl: url, extractionFailed: true };
+  }
+
   // X/Twitter posts: use Jina reader for clean extraction
   if (isXUrl(url)) {
     try {
@@ -110,8 +133,17 @@ export async function extract(url: string): Promise<Extracted> {
       redirect: 'follow',
     });
 
+    const contentLength = Number(res.headers.get('content-length') ?? 0);
+    if (contentLength > MAX_HTML_BYTES) {
+      return { title: getDomain(url) || url, author: null, contentMarkdown: '', contentText: '', publishedAt: null, readingTimeMin: null, canonicalUrl: url, extractionFailed: true };
+    }
+
     const html = await res.text();
     const finalUrl = res.url || url;
+
+    if (html.length > MAX_HTML_BYTES) {
+      return { title: getDomain(finalUrl) || url, author: null, contentMarkdown: '', contentText: '', publishedAt: null, readingTimeMin: null, canonicalUrl: finalUrl, extractionFailed: true };
+    }
 
     const dom = new JSDOM(html, { url: finalUrl });
     const doc = dom.window.document;

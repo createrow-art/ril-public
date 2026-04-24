@@ -12,8 +12,13 @@ import { getProfile, buildProfile, scoreItem } from './scorer.js';
 const app = new Hono();
 
 app.use('*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  origin: (origin) => {
+    if (!origin) return null;
+    if (origin.startsWith('chrome-extension://')) return origin;
+    if (origin === 'http://localhost:3000') return origin;
+    return null;
+  },
+  allowMethods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
   allowHeaders: ['Content-Type'],
 }));
 
@@ -204,7 +209,7 @@ app.post('/api/profile/refresh', async (c) => {
 app.get('/*', serveStatic({ root: 'extension', index: 'newtab.html' }));
 
 export function startApi(port = 3000): void {
-  serve({ fetch: app.fetch, port }, (info) => {
+  serve({ fetch: app.fetch, hostname: '127.0.0.1', port }, (info) => {
     console.log(`✓ API server at http://localhost:${info.port}`);
   });
 }
