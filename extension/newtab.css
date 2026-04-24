@@ -8,7 +8,7 @@
   --border:      #ece5d5;
   --border-2:    #e4ddcd;
   --accent:      #b5322a;
-  --accent-tint: #f7e4de;
+  --accent-tint: rgba(181, 50, 42, 0.06);
   --accent-text: #b5322a;
   --green:       #4F7A57;
   --green-tint:  rgba(79, 122, 87, 0.08);
@@ -92,8 +92,8 @@ html, body {
 }
 
 .tab:hover { background: var(--surface-2); color: var(--ink); }
-.tab.active { background: var(--accent-tint); color: var(--accent-text); }
-.tab.active .tab-count { background: rgba(181, 50, 42, 0.12); color: var(--accent-text); }
+.tab.active { background: var(--accent-tint); color: var(--accent); }
+.tab.active .tab-count { background: rgba(181, 50, 42, 0.10); color: var(--accent); }
 
 .tab-count {
   font-size: 10.5px;
@@ -363,8 +363,12 @@ html, body {
 .group-header {
   display: flex;
   align-items: center;
-  padding: 16px 0 8px;
+  padding: 26px 0 8px;
   gap: 8px;
+}
+
+.group:first-child .group-header {
+  padding-top: 8px;
 }
 
 .group-favicon {
@@ -533,7 +537,7 @@ html, body {
 .item-title {
   font-family: 'Fraunces', Georgia, serif;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -992,7 +996,7 @@ kbd {
   transition: width 0.2s;
 }
 
-.item-score-fill.high { background: var(--accent); }
+.item-score-fill.high { background: var(--green); }
 
 .item-score-num {
   font-family: 'JetBrains Mono', monospace;
@@ -1003,4 +1007,4 @@ kbd {
   line-height: 1;
 }
 
-.item-score-num.high { color: var(--accent); }
+.item-score-num.high { color: var(--green); }
