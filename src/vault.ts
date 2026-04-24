@@ -49,14 +49,20 @@ export async function listItems(
       try {
         const content = await fs.readFile(filePath, 'utf-8');
         const { data } = matter(content);
+        // Support Obsidian Web Clipper frontmatter (source, clipped) as fallbacks
+        const resolvedUrl = data.url || data.canonical_url || data.source || '';
+        let derivedDomain = data.domain || data.site || '';
+        if (!derivedDomain && resolvedUrl) {
+          try { derivedDomain = new URL(resolvedUrl).hostname.replace(/^www\./, ''); } catch { /* ignore */ }
+        }
         items.push({
           id: file.replace(/\.md$/, ''),
           folder: f,
-          url: data.url || data.canonical_url || '',
+          url: resolvedUrl,
           title: data.title || file,
-          site: data.site || data.domain || '',
-          domain: data.domain || data.site || '',
-          savedAt: data.saved_at || '',
+          site: derivedDomain,
+          domain: derivedDomain,
+          savedAt: data.saved_at || data.clipped || data.created || '',
           status: data.status || 'inbox',
           tags: Array.isArray(data.tags) ? data.tags : [],
           note: data.note || null,

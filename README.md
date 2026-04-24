@@ -40,8 +40,12 @@ Open `.env` and set `VAULT_PATH` — the folder where your articles will be save
 
 ### 3. Start the server
 
+Install PM2 once (keeps RIL running in the background — terminal can be closed):
+
 ```bash
-npm start
+npm install -g pm2
+pm2 start npm --name ril -- start
+pm2 save && pm2 startup   # follow the printed instructions to enable auto-start on login
 ```
 
 You should see:
@@ -49,13 +53,7 @@ You should see:
 ✓ API server at http://localhost:3000
 ```
 
-To keep it running in the background across reboots:
-
-```bash
-npm install -g pm2
-pm2 start npm --name ril -- start
-pm2 save && pm2 startup   # follow the printed instructions
-```
+> **Without PM2:** You can also run `npm start` and leave the terminal open, but the server stops when you close it. PM2 is recommended for daily use.
 
 ### 4. Install the Chrome extension
 
