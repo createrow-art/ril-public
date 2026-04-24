@@ -1,22 +1,24 @@
 # RIL — Read It Later
 
-A personal read-it-later system that lives on your machine. Save links from anywhere via a Chrome extension (new tab page + popup + right-click menu). Articles are saved as Markdown files in a local folder and powered by Claude AI for auto-tagging and Smart Mode relevance scoring.
+A personal read-it-later system that lives entirely on your machine. Save links from anywhere via a Chrome extension — new tab page, toolbar popup, or right-click menu. Articles are saved as Markdown files in a local folder.
 
-No cloud, no subscription, no account. Just a Chrome extension + a local server.
+No cloud. No subscription. No account. No AI API required.
 
 ## What you get
 
-- **New tab page** — your reading list, grouped by domain, tag, time, or AI relevance
+- **New tab page** — your reading list, grouped by domain, tag, or time
 - **Extension popup** — click the toolbar icon to save the current tab in one click
 - **Right-click menu** — save any link without leaving the page
-- **Auto-tagging** — Claude reads the article and picks relevant tags automatically
-- **Smart Mode** — Claude builds an interest profile from your saves and ranks new articles by how relevant they are to you
+- **Auto-tagging** — domain and keyword rules assign tags automatically (YouTube → `#video`, GitHub → `#code`, etc.)
+- **Inline notes** — add a note to any saved item directly from the new tab page
+- **Keyboard-first triage** — `j`/`k` to navigate, `e` to archive, `s` to save for later
 
 ## Requirements
 
 - macOS or Windows with Node.js 20+ installed
 - Chrome browser
-- An Anthropic API key (for tagging + Smart Mode — optional but recommended)
+
+That's it — no API keys needed.
 
 ## Setup
 
@@ -34,12 +36,7 @@ npm install
 cp .env.example .env
 ```
 
-Open `.env` and fill in:
-
-- `VAULT_PATH` — a folder where your articles will be saved (e.g. `/Users/yourname/Documents/RIL`). It will be created automatically on first run.
-- `ANTHROPIC_API_KEY` — your Anthropic API key from [console.anthropic.com](https://console.anthropic.com). Optional — the app works without it but tagging and Smart Mode will be off.
-
-  > **Already using Claude Code?** If you set it up with an API key, run `echo $ANTHROPIC_API_KEY` in your terminal. If it prints a key, you're done — RIL picks it up automatically and you can skip this line in `.env`.
+Open `.env` and set `VAULT_PATH` — the folder where your articles will be saved (e.g. `/Users/yourname/Documents/RIL`). It will be created automatically on first run.
 
 ### 3. Start the server
 
@@ -80,14 +77,19 @@ pm2 save && pm2 startup   # follow the printed instructions
 - `s` — save for later
 - `o` — open the original URL
 - `a` — focus the URL input to save a new link
-- `t` — cycle between group-by views (domain / tag / time / Smart)
+- `t` — cycle between group-by views (domain / tag / time)
 - `?` — show keyboard shortcuts
 
-**Smart Mode:**
-- Click ⚙ → toggle "Smart Mode" on
-- Claude analyzes your recent saves and builds an interest profile
-- New articles are scored 0–10 for relevance to your interests
-- Click "Smart ✦" in the header to sort by relevance tier
+## Customising auto-tags
+
+Tags are assigned automatically using two JSON config files — no code required:
+
+- **`config/domain-tags.json`** — maps domains to tags. Add any site you read regularly.
+- **`config/keyword-tags.json`** — regex patterns matched against the article title and URL.
+
+Both files are plain JSON. Open them in any text editor to add your own rules.
+
+> **Tip — AI-assisted tagging:** You can ask any AI assistant (Claude, ChatGPT, etc.) to help batch-tag your existing articles. Your saves are plain Markdown files with YAML frontmatter in `VAULT_PATH/Inbox/`. Point your AI at those files and ask it to fill in the `tags:` field, or to suggest new keyword rules to add to `keyword-tags.json`.
 
 ## Folder layout
 

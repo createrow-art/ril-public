@@ -3,11 +3,9 @@ import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { serve } from '@hono/node-server';
 import { config } from './config.js';
-import { listItems, moveItem, saveItem, findDuplicate, updateItemScore, updateItemNote, type VaultItem, type SaveItem } from './vault.js';
+import { listItems, moveItem, saveItem, findDuplicate, updateItemNote, type VaultItem, type SaveItem } from './vault.js';
 import { extract, getDomain } from './extractor.js';
 import { autoTag } from './tagger.js';
-import { getSettings, saveSettings } from './settings.js';
-import { getProfile, buildProfile, scoreItem } from './scorer.js';
 
 const app = new Hono();
 
@@ -111,39 +109,7 @@ app.post('/api/items', async (c) => {
     relevanceScore: null,
   };
 
-  const filePath = await saveItem(config.vaultPath, item);
-
-  // Async background scoring — don't block the response
-  (async () => {
-    try {
-      const settings = await getSettings();
-      if (!settings.smartMode || !config.anthropicApiKey) return;
-      const profile = await getProfile();
-      if (!profile || profile.topics.length === 0) return;
-      // Build a minimal VaultItem for scoring
-      const vaultItem: VaultItem = {
-        id: filePath.split('/').pop()?.replace(/\.md$/, '') ?? '',
-        folder: 'Inbox',
-        url,
-        title: extracted.title,
-        site: domain,
-        domain,
-        savedAt: item.savedAt,
-        status: 'inbox',
-        tags,
-        note: note ?? null,
-        readingTimeMin: extracted.readingTimeMin,
-        extractionFailed: extracted.extractionFailed,
-        author: extracted.author,
-        publishedAt: extracted.publishedAt,
-        relevanceScore: null,
-      };
-      const score = await scoreItem(vaultItem, profile);
-      await updateItemScore(config.vaultPath, vaultItem.id, score);
-    } catch (err) {
-      console.warn('(background scoring error:', (err as Error).message, ')');
-    }
-  })();
+  await saveItem(config.vaultPath, item);
 
   return c.json({ ok: true });
 });
@@ -160,49 +126,6 @@ app.patch('/api/items/:id', async (c) => {
   const { note } = await c.req.json<{ note: string }>();
   await updateItemNote(config.vaultPath, id, note ?? '');
   return c.json({ ok: true });
-});
-
-// Settings
-app.get('/api/settings', async (c) => {
-  const settings = await getSettings();
-  return c.json(settings);
-});
-
-app.post('/api/settings', async (c) => {
-  const body = await c.req.json<{ smartMode?: boolean }>();
-  const current = await getSettings();
-  const updated = { ...current, ...body };
-  await saveSettings(updated);
-  return c.json(updated);
-});
-
-// Interest profile
-app.get('/api/profile', async (c) => {
-  const profile = await getProfile();
-  return c.json(profile ?? { topics: [], summary: null, generatedAt: null });
-});
-
-app.post('/api/profile/refresh', async (c) => {
-  const items = await listItems(config.vaultPath);
-  const profile = await buildProfile(items);
-
-  // Background: score any unscored items against the fresh profile
-  if (profile.topics.length > 0) {
-    const unscored = items.filter((i) => i.relevanceScore === null || i.relevanceScore === undefined);
-    if (unscored.length > 0) {
-      (async () => {
-        for (const item of unscored.slice(0, 100)) {
-          try {
-            const score = await scoreItem(item, profile);
-            await updateItemScore(config.vaultPath, item.id, score);
-          } catch {}
-        }
-        console.log(`(scored ${Math.min(unscored.length, 100)} unscored items)`);
-      })();
-    }
-  }
-
-  return c.json({ ...profile, unscoredCount: items.filter((i) => i.relevanceScore === null || i.relevanceScore === undefined).length });
 });
 
 // Serve the extension UI as a local web app

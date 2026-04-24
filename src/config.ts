@@ -12,5 +12,4 @@ function required(name: string): string {
 
 export const config = {
   vaultPath: required('VAULT_PATH'),
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? '',
 };

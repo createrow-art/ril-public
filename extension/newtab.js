@@ -13,9 +13,6 @@ const state = {
   focusedIndex: 0,
   lastAction: null,
   toastTimer: null,
-  smartMode: false,
-  profile: null,
-  sortBy: 'date', // 'date' | 'score'
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -130,33 +127,7 @@ function visibleGroups() {
   return state.groups.filter((g) => g.key === state.activeDomain);
 }
 
-function smartGroups() {
-  const items = allFlatItems();
-  const tiers = [
-    { key: 'highly-relevant', label: 'Highly relevant ✦', min: 7, max: 10 },
-    { key: 'worth-reading',   label: 'Worth reading',     min: 4, max: 6 },
-    { key: 'lower-priority',  label: 'Lower priority',    min: 0, max: 3 },
-    { key: 'unscored',        label: 'Unscored',          min: null, max: null },
-  ];
-  return tiers.map(tier => {
-    const tierItems = items.filter(item => {
-      const s = item.relevanceScore;
-      if (tier.key === 'unscored') return s === null || s === undefined;
-      return s !== null && s !== undefined && s >= tier.min && s <= tier.max;
-    });
-    return { key: tier.key, label: tier.label, count: tierItems.length, items: tierItems };
-  }).filter(g => g.items.length > 0);
-}
-
 function sortGroupItems(items) {
-  if (state.sortBy === 'score') {
-    return [...items].sort((a, b) => {
-      const sa = a.relevanceScore ?? -1;
-      const sb = b.relevanceScore ?? -1;
-      return sb - sa;
-    });
-  }
-  // default: newest first
   return [...items].sort((a, b) =>
     new Date(b.savedAt || 0).getTime() - new Date(a.savedAt || 0).getTime()
   );
@@ -302,18 +273,6 @@ function renderFilterBar() {
       pill.addEventListener('click', () => { state.timePeriod = p.key; render(); });
       bar.appendChild(pill);
     }
-    if (state.smartMode) {
-      const sortBtn = document.createElement('button');
-      sortBtn.className = 'sort-pill' + (state.sortBy === 'score' ? ' active' : '');
-      sortBtn.textContent = state.sortBy === 'score' ? '↓ Score' : '↓ Date';
-      sortBtn.title = 'Toggle sort order';
-      sortBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        state.sortBy = state.sortBy === 'date' ? 'score' : 'date';
-        render();
-      });
-      bar.appendChild(sortBtn);
-    }
     return;
   }
 
@@ -359,19 +318,6 @@ function renderFilterBar() {
     bar.appendChild(pill);
   }
 
-  // Sort pill — far right, only when Smart Mode is on
-  if (state.smartMode) {
-    const sortBtn = document.createElement('button');
-    sortBtn.className = 'sort-pill' + (state.sortBy === 'score' ? ' active' : '');
-    sortBtn.textContent = state.sortBy === 'score' ? '↓ Score' : '↓ Date';
-    sortBtn.title = 'Toggle sort order';
-    sortBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      state.sortBy = state.sortBy === 'date' ? 'score' : 'date';
-      render();
-    });
-    bar.appendChild(sortBtn);
-  }
 }
 
 function render() {
@@ -546,26 +492,6 @@ function buildItemEl(item, flatIdx) {
     rt.className = 'item-read-time';
     rt.textContent = `${item.readingTimeMin}m`;
     meta.appendChild(rt);
-  }
-
-  // Score bar (smart mode — subtle signal on all views)
-  if (state.smartMode && item.relevanceScore !== null && item.relevanceScore !== undefined) {
-    const s = item.relevanceScore;
-    const isHigh = s >= 8;
-    const wrap = document.createElement('div');
-    wrap.className = 'item-score-wrap';
-    const bar = document.createElement('div');
-    bar.className = 'item-score-bar';
-    const fill = document.createElement('div');
-    fill.className = 'item-score-fill' + (isHigh ? ' high' : '');
-    fill.style.width = (s * 10) + '%';
-    bar.appendChild(fill);
-    const num = document.createElement('span');
-    num.className = 'item-score-num' + (isHigh ? ' high' : '');
-    num.textContent = s;
-    wrap.appendChild(bar);
-    wrap.appendChild(num);
-    meta.appendChild(wrap);
   }
 
   el.appendChild(meta);
@@ -926,116 +852,5 @@ document.getElementById('url-input').addEventListener('keydown', (e) => {
   }
 });
 
-// ── Smart Mode ────────────────────────────────────────────────────────────────
-async function loadSettings() {
-  try {
-    const res = await fetch(`${API}/api/settings`);
-    if (!res.ok) return;
-    const s = await res.json();
-    state.smartMode = !!s.smartMode;
-    document.getElementById('smart-mode-toggle').checked = state.smartMode;
-    applySmartMode();
-  } catch {}
-}
-
-async function saveSettingsToServer() {
-  try {
-    await fetch(`${API}/api/settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ smartMode: state.smartMode }),
-    });
-  } catch {}
-}
-
-async function loadProfile() {
-  try {
-    const res = await fetch(`${API}/api/profile`);
-    if (!res.ok) { state.profile = null; return; }
-    state.profile = await res.json();
-    renderProfileInOverlay();
-  } catch { state.profile = null; }
-}
-
-function applySmartMode() {
-  const profileSection = document.getElementById('profile-section');
-  document.querySelectorAll('.toggle-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.group === state.groupBy);
-  });
-
-  if (state.smartMode) {
-    profileSection.classList.remove('hidden');
-  } else {
-    profileSection.classList.add('hidden');
-    state.sortBy = 'date';
-  }
-}
-
-function renderProfileInOverlay() {
-  if (!state.profile) return;
-  document.getElementById('profile-summary-text').textContent = state.profile.summary || '—';
-  const list = document.getElementById('profile-topics-list');
-  list.innerHTML = '';
-  for (const topic of (state.profile.topics || [])) {
-    const chip = document.createElement('span');
-    chip.className = 'profile-topic-chip';
-    chip.textContent = topic;
-    list.appendChild(chip);
-  }
-  if (state.profile.generatedAt) {
-    document.getElementById('profile-age').textContent = `Updated ${relativeTime(state.profile.generatedAt)}`;
-  }
-}
-
-// Settings overlay
-document.getElementById('settings-btn').addEventListener('click', () => {
-  document.getElementById('settings-overlay').classList.remove('hidden');
-});
-document.getElementById('settings-close').addEventListener('click', () => {
-  document.getElementById('settings-overlay').classList.add('hidden');
-});
-document.getElementById('settings-overlay').addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
-});
-
-// Smart mode toggle
-document.getElementById('smart-mode-toggle').addEventListener('change', async (e) => {
-  state.smartMode = e.target.checked;
-  await saveSettingsToServer();
-  applySmartMode();
-  if (state.smartMode && !state.profile) {
-    // Auto-build profile on first enable
-    document.getElementById('profile-regen-btn').click();
-  }
-});
-
-// Profile regenerate
-document.getElementById('profile-regen-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('profile-regen-btn');
-  btn.textContent = 'Building profile…';
-  btn.disabled = true;
-  try {
-    const res = await fetch(`${API}/api/profile/refresh`, { method: 'POST' });
-    if (res.ok) {
-      const data = await res.json();
-      state.profile = data;
-      renderProfileInOverlay();
-      // If items are being scored in background, reload after a delay
-      if (data.unscoredCount > 0) {
-        btn.textContent = `Scoring ${data.unscoredCount} items…`;
-        const perItem = 1500; // ~1.5s per LLM call
-        const wait = Math.min(data.unscoredCount * perItem, 30000);
-        setTimeout(() => { load(true); }, wait);
-      }
-    }
-  } catch {}
-  btn.textContent = 'Regenerate';
-  btn.disabled = false;
-});
-
 // ── Boot ──────────────────────────────────────────────────────────────────────
-(async () => {
-  await loadSettings();
-  load();
-  if (state.smartMode) loadProfile();
-})();
+load();
