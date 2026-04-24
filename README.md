@@ -104,6 +104,21 @@ VAULT_PATH/
 
 You can open these files in any text editor, Obsidian, or any Markdown app.
 
+## Cross-device sync
+
+RIL has no built-in sync — but because your reading list is just a folder of Markdown files, any cloud sync service that can sync a folder gives you cross-device sync for free.
+
+**Using Obsidian Sync (or iCloud Drive / Dropbox / any cloud folder):**
+
+1. Set `VAULT_PATH` to a folder that is synced by your chosen service — for example `/Users/yourname/Library/Mobile Documents/com~apple~CloudDocs/RIL` for iCloud, or your Obsidian vault folder if you have an Obsidian Sync account.
+2. Make sure the cloud sync client is running and the folder is fully synced on every device.
+3. Install Node.js, clone this repo, and run the server on each Mac/PC, each pointing its own `.env` → `VAULT_PATH` to the same synced folder path on that machine.
+4. Install the Chrome extension on each browser.
+
+Once all devices are connected to the same synced folder, saving on one machine will appear on another after the sync propagates (usually seconds). Your reading list, notes, and tags stay in sync across all your devices without any custom server or database.
+
+> **Tip:** If you already use Obsidian with Obsidian Sync, just point `VAULT_PATH` at your existing Obsidian vault. Your RIL items will appear as notes in Obsidian and sync through your existing account automatically. You can ask your AI assistant to read those notes and help you triage, tag, or summarize your reading list.
+
 ## Updating
 
 ```bash
