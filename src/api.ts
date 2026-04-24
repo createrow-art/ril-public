@@ -3,7 +3,7 @@ import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { serve } from '@hono/node-server';
 import { config } from './config.js';
-import { listItems, moveItem, saveItem, findDuplicate, updateItemNote, type VaultItem, type SaveItem } from './vault.js';
+import { listItems, moveItem, saveItem, findDuplicate, updateItemNote, ensureFolders, seedVault, type VaultItem, type SaveItem } from './vault.js';
 import { extract, getDomain } from './extractor.js';
 import { autoTag } from './tagger.js';
 
@@ -130,7 +130,9 @@ app.patch('/api/items/:id', async (c) => {
 // Serve the extension UI as a local web app
 app.get('/*', serveStatic({ root: 'extension', index: 'newtab.html' }));
 
-export function startApi(port = 3000): void {
+export async function startApi(port = 3000): Promise<void> {
+  await ensureFolders(config.vaultPath);
+  await seedVault(config.vaultPath);
   serve({ fetch: app.fetch, hostname: '127.0.0.1', port }, (info) => {
     console.log(`✓ API server at http://localhost:${info.port}`);
   });

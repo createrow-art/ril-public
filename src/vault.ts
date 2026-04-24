@@ -1,7 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const FOLDERS = ['Inbox', 'Saved', 'Archive'] as const;
 type Folder = typeof FOLDERS[number];
@@ -133,6 +137,33 @@ export type SaveItem = {
 export async function ensureFolders(vaultPath: string): Promise<void> {
   for (const folder of FOLDERS) {
     await fs.mkdir(path.join(vaultPath, folder), { recursive: true });
+  }
+}
+
+/**
+ * On a brand-new vault (empty Inbox), copy seed articles from seed/Inbox/
+ * so first-time users have something to read immediately.
+ */
+export async function seedVault(vaultPath: string): Promise<void> {
+  const inboxPath = path.join(vaultPath, 'Inbox');
+  try {
+    const existing = await fs.readdir(inboxPath);
+    if (existing.some((f) => f.endsWith('.md'))) return; // not empty, skip
+  } catch {
+    return; // folder doesn't exist yet — ensureFolders will create it
+  }
+
+  const seedDir = path.resolve(__dirname, '..', 'seed', 'Inbox');
+  let seeds: string[];
+  try {
+    seeds = await fs.readdir(seedDir);
+  } catch {
+    return; // no seed directory
+  }
+
+  for (const file of seeds) {
+    if (!file.endsWith('.md')) continue;
+    await fs.copyFile(path.join(seedDir, file), path.join(inboxPath, file));
   }
 }
 
