@@ -192,6 +192,24 @@ function filename(item: SaveItem): string {
   return `${date}-${slug}-${hash}.md`;
 }
 
+export async function updateItemNote(vaultPath: string, id: string, note: string): Promise<void> {
+  for (const folder of FOLDERS) {
+    const dir = path.join(vaultPath, folder);
+    let files: string[];
+    try { files = await fs.readdir(dir); } catch { continue; }
+    const match = files.find((f) => f.startsWith(id) || f.replace(/\.md$/, '') === id);
+    if (!match) continue;
+    const filePath = path.join(dir, match);
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const parsed = matter(content);
+      parsed.data.note = note || null;
+      await fs.writeFile(filePath, matter.stringify(parsed.content, parsed.data), 'utf-8');
+      return;
+    } catch { continue; }
+  }
+}
+
 export async function updateItemScore(vaultPath: string, id: string, score: number): Promise<void> {
   for (const folder of FOLDERS) {
     const dir = path.join(vaultPath, folder);

@@ -3,7 +3,7 @@ import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { serve } from '@hono/node-server';
 import { config } from './config.js';
-import { listItems, moveItem, saveItem, findDuplicate, updateItemScore, type VaultItem, type SaveItem } from './vault.js';
+import { listItems, moveItem, saveItem, findDuplicate, updateItemScore, updateItemNote, type VaultItem, type SaveItem } from './vault.js';
 import { extract, getDomain } from './extractor.js';
 import { autoTag } from './tagger.js';
 import { getSettings, saveSettings } from './settings.js';
@@ -147,6 +147,13 @@ app.post('/api/items/:id/action', async (c) => {
   const id = c.req.param('id');
   const { action } = await c.req.json<{ action: 'save' | 'archive' | 'trash' | 'inbox' }>();
   await moveItem(config.vaultPath, id, action);
+  return c.json({ ok: true });
+});
+
+app.patch('/api/items/:id', async (c) => {
+  const id = c.req.param('id');
+  const { note } = await c.req.json<{ note: string }>();
+  await updateItemNote(config.vaultPath, id, note ?? '');
   return c.json({ ok: true });
 });
 

@@ -1,7 +1,6 @@
 // In Chrome extension: use absolute localhost URL
 // When served from the Node server (mobile/web): use relative paths
 const API = location.protocol === 'chrome-extension:' ? 'http://localhost:3000' : '';
-const VAULT_NAME = 'RIL'; // must match your Obsidian vault name
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const state = {
@@ -65,6 +64,54 @@ function getYoutubeThumbnail(url) {
     if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
   } catch {}
   return null;
+}
+
+function buildNoteEl(item) {
+  const wrap = document.createElement('div');
+  wrap.className = 'item-note-wrap';
+
+  const display = document.createElement('span');
+  display.className = 'item-note' + (item.note ? '' : ' item-note-empty');
+  display.textContent = item.note || '';
+
+  display.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const input = document.createElement('input');
+    input.className = 'item-note-input';
+    input.value = item.note || '';
+    input.placeholder = 'Add a note…';
+    wrap.replaceChild(input, display);
+    input.focus();
+
+    const commit = async () => {
+      const newNote = input.value.trim();
+      item.note = newNote || null;
+      try {
+        await fetch(`${API}/api/items/${item.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note: newNote }),
+        });
+      } catch {}
+      display.textContent = newNote;
+      display.className = 'item-note' + (newNote ? '' : ' item-note-empty');
+      wrap.replaceChild(display, input);
+    };
+
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        display.textContent = item.note || '';
+        display.className = 'item-note' + (item.note ? '' : ' item-note-empty');
+        if (wrap.contains(input)) wrap.replaceChild(display, input);
+      }
+    });
+  });
+
+  wrap.appendChild(display);
+  return wrap;
 }
 
 function buildThumbTile(item) {
@@ -175,12 +222,6 @@ function timeGroups() {
     .map(b => ({ key: b.key, label: b.label, count: b.items.length, items: b.items }));
 }
 
-function obsidianUrl(itemId) {
-  // vault file lives at RIL/<folder>/<id>.md
-  const folder = state.folder;
-  const file = encodeURIComponent(`RIL/${folder}/${itemId}.md`);
-  return `obsidian://open?vault=${encodeURIComponent(VAULT_NAME)}&file=${file}`;
-}
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 async function fetchItems() {
@@ -470,6 +511,7 @@ function buildItemEl(item, flatIdx) {
   timeSub.className = 'item-time-sub';
   timeSub.textContent = relativeTime(item.savedAt);
   textCol.appendChild(timeSub);
+  textCol.appendChild(buildNoteEl(item));
 
   el.appendChild(textCol);
 
@@ -496,14 +538,6 @@ function buildItemEl(item, flatIdx) {
     domain.className = 'item-domain';
     domain.textContent = item.domain || item.site;
     meta.appendChild(domain);
-  }
-
-  // Note
-  if (item.note) {
-    const note = document.createElement('span');
-    note.className = 'item-note';
-    note.textContent = `"${item.note}"`;
-    meta.appendChild(note);
   }
 
   // Read time
@@ -780,7 +814,7 @@ document.addEventListener('keydown', (e) => {
 
     case 'Enter': {
       const item = focusedItem();
-      if (item) window.open(obsidianUrl(item.id), '_blank');
+      if (item) window.open(item.url, '_blank');
       break;
     }
 

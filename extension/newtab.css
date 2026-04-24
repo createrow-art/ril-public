@@ -579,15 +579,50 @@ html, body {
   letter-spacing: 0.02em;
 }
 
+.item-note-wrap {
+  display: flex;
+  min-width: 0;
+  margin-top: 1px;
+}
+
 .item-note {
   font-size: 11px;
   color: var(--ink-2);
   font-style: italic;
-  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: text;
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+  transition: background 0.1s;
+  max-width: 320px;
 }
+
+.item-note:hover { background: var(--surface-2); }
+
+.item-note-empty { color: transparent; }
+.item:hover .item-note-empty,
+.item.focused .item-note-empty { color: var(--border-2); }
+.item-note-empty::before { content: '+ note'; }
+
+.item-note-input {
+  font-size: 11px;
+  font-style: italic;
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  padding: 1px 6px;
+  outline: none;
+  width: 260px;
+  min-width: 0;
+  transition: border-color 0.12s;
+}
+
+.item-note-input:focus { border-color: var(--accent); }
 
 .item-tags {
   display: flex;
