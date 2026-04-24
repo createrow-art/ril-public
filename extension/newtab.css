@@ -149,13 +149,12 @@ html, body {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
   color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s;
+  padding: 0;
 }
 
 .help-btn:hover { border-color: var(--muted); color: var(--ink); }
@@ -514,11 +513,6 @@ html, body {
   border-radius: 0 2px 2px 0;
 }
 
-/* High-score row accent */
-.item.score-high {
-  border-left: 3px solid var(--accent);
-  padding-left: 5px;
-}
 
 .item.removing {
   animation: removeItem 0.22s ease forwards;
@@ -786,12 +780,12 @@ kbd {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  font-size: 13px;
   color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s;
+  padding: 0;
 }
 
 .settings-btn:hover { border-color: var(--muted); color: var(--ink); }
@@ -974,12 +968,12 @@ kbd {
   font-family: 'Inter', sans-serif;
 }
 
-/* Score — horizontal bar + mono numeral */
+/* Score — horizontal bar + mono numeral side by side */
 .item-score-wrap {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
   flex-shrink: 0;
 }
 

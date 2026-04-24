@@ -441,12 +441,11 @@ function render() {
 
 function buildItemEl(item, flatIdx) {
   const el = document.createElement('div');
-  const highScore = state.smartMode && item.relevanceScore >= 8;
-  el.className = 'item' + (highScore ? ' score-high' : '');
+  el.className = 'item';
   el.dataset.id = item.id;
   el.dataset.idx = flatIdx;
 
-  // Thumbnail: YouTube image or typographic article tile
+  // YouTube thumbnail only (articles have no thumbnail)
   const thumb = getYoutubeThumbnail(item.url);
   if (thumb) {
     const img = document.createElement('img');
@@ -454,10 +453,8 @@ function buildItemEl(item, flatIdx) {
     img.src = thumb;
     img.alt = '';
     img.loading = 'lazy';
-    img.onerror = () => img.replaceWith(buildThumbTile(item));
+    img.onerror = () => img.remove();
     el.appendChild(img);
-  } else {
-    el.appendChild(buildThumbTile(item));
   }
 
   // Title + timestamp column
