@@ -585,8 +585,10 @@ async function triggerAction(item, action) {
   state.groups = state.groups.filter((g) => g.items.length > 0);
   state.total = flatItems().length;
 
-  // Re-render
+  // Re-render (preserve scroll position)
+  const scrollY = window.scrollY;
   render();
+  window.scrollTo(0, scrollY);
   updateFocus();
 
   // Store for undo (not for trash — can't recover deleted files)
