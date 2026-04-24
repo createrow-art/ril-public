@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Chrome extension + local server for saving articles. AI tagging, Smart Mode scoring, plain Markdown files.",
+  "description": "Chrome extension + local server for saving articles as plain Markdown files. No cloud, no account, no AI API required.",
   "license": "MIT",
   "engines": {
     "node": ">=20"

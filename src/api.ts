@@ -106,7 +106,6 @@ app.post('/api/items', async (c) => {
     source: 'web',
     discordMessageId: '',
     contentMarkdown: extracted.contentMarkdown,
-    relevanceScore: null,
   };
 
   await saveItem(config.vaultPath, item);

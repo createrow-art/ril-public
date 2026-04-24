@@ -21,7 +21,6 @@ export type VaultItem = {
   extractionFailed: boolean;
   author: string | null;
   publishedAt: string | null;
-  relevanceScore: number | null;
 };
 
 export async function listItems(
@@ -61,7 +60,6 @@ export async function listItems(
           extractionFailed: data.extraction_failed || false,
           author: data.author || null,
           publishedAt: data.published_at || null,
-          relevanceScore: typeof data.relevance_score === 'number' ? data.relevance_score : null,
         });
       } catch {
         // skip unreadable files
@@ -130,7 +128,6 @@ export type SaveItem = {
   source: string;
   discordMessageId: string;
   contentMarkdown: string;
-  relevanceScore?: number | null;
 };
 
 export async function ensureFolders(vaultPath: string): Promise<void> {
@@ -210,23 +207,6 @@ export async function updateItemNote(vaultPath: string, id: string, note: string
   }
 }
 
-export async function updateItemScore(vaultPath: string, id: string, score: number): Promise<void> {
-  for (const folder of FOLDERS) {
-    const dir = path.join(vaultPath, folder);
-    let files: string[];
-    try { files = await fs.readdir(dir); } catch { continue; }
-    const match = files.find((f) => f.startsWith(id) || f.replace(/\.md$/, '') === id);
-    if (!match) continue;
-    const filePath = path.join(dir, match);
-    try {
-      const content = await fs.readFile(filePath, 'utf-8');
-      const parsed = matter(content);
-      parsed.data.relevance_score = score;
-      await fs.writeFile(filePath, matter.stringify(parsed.content, parsed.data), 'utf-8');
-      return;
-    } catch { continue; }
-  }
-}
 
 export async function saveItem(
   vaultPath: string,
@@ -251,7 +231,6 @@ export async function saveItem(
     extraction_failed: item.extractionFailed,
     tags: item.tags,
     note: item.note || null,
-    relevance_score: item.relevanceScore ?? null,
   };
 
   const body = item.extractionFailed
